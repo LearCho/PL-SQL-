@@ -1,0 +1,80 @@
+/*Create a new table in HR schema with columns defined to store an numerical ID (as PK) and a text message.
+Create specific database object to generate values for table’s primary key.
+Create and execute a simple anonymous block which:
+- Has a variable storing your birth day (14, 29, 3, etc.) and one storing your name
+- Executes an 10 times an iteration and insert each time a record into message table; any row inserted comprises of a PK and a message comprising of
+a text at your choice concatenated with ID (separated by string ‘ --- ‘)
+- Parse EMPLOYEES table (in HR schema) and pick (ordered or randomly) a number of IDs (employee_id) – aka rows – equal with:
+• Your birth day if it is between 20 and 31/30/28
+• Double the number of your birth day if between 1 and 10
+• First even number greater than birth day if birth day between 11 and 19.
+- Iterative, insert into message table:
+• A new ID
+• A text comprising of: first_name, last_name, salary for employee_id picked above
+- Insert a last row in message table with text compound of: Name and your birth date in format: 31-January-2001 */
+
+create table my_homework_table(
+mt_id number NOT NULL,
+mt_message varchar2(128),
+constraint PK_id PRIMARY KEY(mt_id)
+); /* mt_id PK */
+
+
+create sequence myHomework_Seq
+start with 1 NOMAXVALUE; /* sequence that generates ID values*/
+
+commit;
+
+set serveroutput on;
+declare
+MyBirthDay number(2, 0) := 17;
+MyName varchar(50) := 'Lavinia C';
+NumberOfRows number(5,0) := 1;
+type ids is table of number(5,0);
+type first_names is table of varchar(20);
+type last_names is table of varchar(20);
+type salaries is table of number(8,2);
+ids_array ids := ids();
+fnames_array first_names := first_names();
+lnames_array last_names := last_names();
+sal_array salaries := salaries();
+begin 
+/* inserting 10 records with id and message*/
+for i in 1..10 LOOP
+insert into MY_HOMEWORK_TABLE(mt_id, mt_message)
+values (myHomework_Seq.nextval,'Mesajul: ' || 
+dbms_random.string('P', dbms_random.value(2,64)) || ' ---- ' || 
+myHomework_Seq.nextval);
+END LOOP;
+/* employees records*/
+if MyBirthDay between 20 and 31 then NumberOfRows := MyBirthDay;
+elsif MyBirthDay between 1 and 10 then NumberOfRows := 2*MyBirthDay;
+elsif MyBirthDay between 11 and 19 then 
+ if MOD(MyBirthDay, 2) = 0 then NumberOfRows := MyBirthDay + 2;
+ elsif MOD(MyBirthDay, 2) = 1 then NumberOfRows := MyBirthDay + 1; 
+ else NumberOfRows := 0;
+ end if;
+else NumberOfRows := 0;
+end if;
+
+for i in 1..NumberOfRows LOOP
+select employee_id, first_name, last_name, salary bulk collect into 
+ids_array, fnames_array, lnames_array, sal_array from employees
+order by employee_id;
+/*dbms_output.put_line(ids_array(i) || ' ' || fnames_array(i) || ' ' || 
+lnames_array(i) || ' ' || sal_array(i));*/
+end LOOP;
+
+for i in 1..NumberOfRows LOOP
+insert into MY_HOMEWORK_TABLE(mt_id, mt_message) 
+values(myHomework_Seq.nextval, fnames_array(i) || ' ' || lnames_array(i) 
+|| ' ' || sal_array(i));
+end LOOP;
+/* inserting my name and my date of birth*/
+insert into MY_HOMEWORK_TABLE(mt_id, mt_message) 
+values(myHomework_Seq.nextval, MyName || ' ' || TO_CHAR(TO_DATE(MyBirthDay || 
+'-June-1997'),'DD-MONTH-YYYY'));
+end;
+
+commit;
+select * from my_homework_table;
