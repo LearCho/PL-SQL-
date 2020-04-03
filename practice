@@ -1,0 +1,63 @@
+/*anonymous blocks*/
+
+Ex.1 /*name initcap*/
+set serveroutput on;
+declare your_name varchar2(50):= 'lavinia';
+begin dbms_output.put_line('Hello World. ' || INITCAP(your_name)); 
+end;
+
+Ex.2 /*dates*/
+set serveroutput on;
+begin
+dbms_output.put_line(sysdate); /*today's date*/
+dbms_output.put_line(current_timestamp); /*current timestamp*/
+dbms_output.put_line(TO_CHAR(sysdate, 'DD-MON-YYYY hh:mi:ss'));
+dbms_output.put_line(TO_CHAR(current_timestamp, 'MM/DD/YY hh:mi AM'));
+end;
+
+Ex.3 /*the employees table belongs to the hr schema*/
+set serveroutput on;
+declare
+FirstName varchar(25);
+LastName varchar(25);
+EmployeeName varchar(50);
+Salary number(8); 
+PF_Contribution number(8);
+begin
+select first_name, last_name, (first_name || ' ' || last_name), salary, (0.12*0.45*salary) 
+into FirstName, LastName, EmployeeName, Salary, PF_Contribution from EMPLOYEES where 
+employee_id = '107';
+dbms_output.put_line('First name: ' || FirstName); 
+dbms_output.put_line('Last name: ' || LastName); 
+dbms_output.put_line('Employee name: ' || EmployeeName); 
+dbms_output.put_line('Employee salary: ' || Salary); 
+dbms_output.put_line('Employee contribution toward the PF: ' || PF_Contribution); 
+end;
+
+Ex.4 /* average by department */
+set serveroutput on;
+declare 
+TYPE departments is table of varchar(30);
+TYPE average_of_PF is table of number(8,4);
+departments_array departments := departments();
+PF_list_array average_of_PF := average_of_PF();
+begin
+select department_name, AVG(0.12*0.45*salary) BULK COLLECT into departments_array, PF_list_array from 
+employees e  inner join departments d on
+e.department_id = d.department_id group by d.department_name;
+for i in 1.. departments_array.count LOOP
+/*for i in 1.. PF_list_array.count LOOP*/
+dbms_output.put_line('Average of department ' ||  departments_array(i) || ': ' || PF_list_array(i));
+end loop;
+end;
+
+Ex 4.1 /* average of the company */
+set serveroutput on;
+declare 
+Average_of_PF number(8);
+TYPE EmployeeName is table of varchar(60);
+names_array EmployeeName := EmployeeName('Andrew');
+begin
+select AVG(0.12*0.45*salary) into Average_of_PF from employees; /* avg of company*/
+dbms_output.put_line(Average_of_PF);
+end;
